@@ -1,4 +1,5 @@
 
+from fleet import Fleet
 import sys
 import pygame
 from random import choice
@@ -7,6 +8,8 @@ from random import choice
 from settings import Settings
 from tile import Tile
 from label import Label
+
+
 class Battleship:
     """class defines how the game works"""
 
@@ -14,17 +17,18 @@ class Battleship:
         pygame.init()
         self.settings = Settings()
 
-        self.screen = pygame.display.set_mode((self.settings.screen_width, self.settings.screen_height))
+        self.screen = pygame.display.set_mode(
+            (self.settings.screen_width, self.settings.screen_height))
         self.settings.screen_width = self.screen.get_rect().width
         self.settings.screen_height = self.screen.get_rect().height
         pygame.display.set_caption("Battleship")
 
-        #initialize game objects
+        # initialize game objects
         self.tiles = pygame.sprite.Group()
         self.labels = pygame.sprite.Group()
         self.ships = []
 
-        #initialize game board
+        # initialize game board
         self._create_board()
         self._create_ships()
 
@@ -48,17 +52,17 @@ class Battleship:
         label_height = self.settings.tile_height
         edge_distance = board_margin - label_height
         for label in range(10):
-            pos_x = board_margin + label * label_width
+            pos_x = board_margin + label * label_width - 1*label
             str = chr(65+label)
             label_x = Label(self, str, pos_x, edge_distance)
 
             self.labels.add(label_x)
 
             pos_y = board_margin + label * label_height - 1*label
-            str =  chr(49 + label)
+            str = chr(49 + label)
             if str == ":":
                 str = "10"
-            label_y = Label(self,str,edge_distance, pos_y)
+            label_y = Label(self, str, edge_distance, pos_y)
             self.labels.add(label_y)
 
         for row_number in range(10):
@@ -77,123 +81,124 @@ class Battleship:
         self.tiles.add(tile)
 
     def _create_ships(self):
-        space_available = []
-        for i in range(10):
-            space_available.append([j for j in range(10)])
+        fleet = Fleet(self)
 
-        temp_available = space_available.copy()
-        good_positions = []
-        
-        max_size = 3
-        size = max_size
-        ships_left = max_size - size + 1
-        trial = 0
-        while size >= 1:
+        trial_summary = 0
+        reset_counter = 0
+        while fleet.size >= 1:
+
             temp_position = []
             horizontal = False
             vertical = False
-            #-1 = horizontal, 1 = vertical
-            orientation = choice([-1,1])
+            # -1 = horizontal, 1 = vertical
+            orientation = choice([-1, 1])
             if orientation == -1:
                 horizontal = True
             else:
                 vertical = True
 
-            # horizontal = False
-            # vertical = True
-            starting_y = choice(range(10 - size*vertical))
-            if(len(space_available[starting_y]) == 0):
+            starting_y = choice(range(10 - fleet.size*vertical))
+            if(len(fleet.space_available[starting_y]) == 0):
                 continue
-            
-            while trial < 50:
-                starting_x = choice(space_available[starting_y])
-                if starting_x < 10 - size*horizontal:
+
+            x_trial = 0
+            while x_trial < 3:
+                starting_x = choice(fleet.space_available[starting_y])
+                if starting_x < 10 - fleet.size*horizontal:
+                    position_good = True
                     break
                 else:
-                    trial += 1
-
-
-            temp_size = size+1
-            position_good = True
-            
-            while temp_size >= 0 and position_good:
-                
-               
-                if trial > 50:
-                    space_available = []
-                    for i in range(10):
-                        space_available.append([j for j in range(10)])
-
-                    temp_available = space_available.copy()
-                    good_positions = []
-                    
-                    max_size = 3
-                    size = max_size
-                    ships_left = max_size + 1 - size
-                    trial = 0
+                    x_trial += 1
                     position_good = False
+
+            trial_summary += x_trial
+            trial_summary += 1
+            temp_size = fleet.size+1
+            while temp_size >= 0 and position_good:
+
+                if fleet.trial > fleet.max_trials:
+                    fleet._reset_parameters()
+                    position_good = False
+
+                    reset_counter += 1
+                    trial_summary += fleet.max_trials
                     break
-                if horizontal:                    
-                    if temp_size + starting_x < 0: 
+
+                if horizontal:
+                    if temp_size + starting_x < 0:
                         break
                     elif temp_size + starting_x > 9:
                         temp_size -= 1
-                    for i in range (-1,2, 1):
+                    for i in range(-1, 2, 1):
                         if starting_y+i < 0 or starting_y + i > 9:
                             continue
-                        if(starting_x + temp_size not in space_available[starting_y + i]):
+                        if(starting_x + temp_size not in fleet.space_available[starting_y + i]):
                             position_good = False
                             break
-                        temp_available[starting_y+i].remove(starting_x + temp_size)
-                        
-                    if temp_size != -1 and temp_size != size + 1:
-                        temp_position.append((starting_x+temp_size, starting_y))
+                        fleet.temp_available[starting_y +
+                                       i].remove(starting_x + temp_size)
 
-                elif vertical:         
-                    if temp_size + starting_y < 0: 
+                    if temp_size != -1 and temp_size != fleet.size + 1:
+                        temp_position.append(
+                            (starting_x+temp_size, starting_y))
+
+                elif vertical:
+                    if temp_size + starting_y < 0:
                         break
                     elif temp_size + starting_y > 9:
                         temp_size -= 1
-                    for i in range (-1,2, 1):
+                    for i in range(-1, 2, 1):
                         if starting_x+i < 0 or starting_x + i > 9:
                             continue
-                        if(starting_x + i not in space_available[starting_y + temp_size]):
+                        if(starting_x + i not in fleet.space_available[starting_y + temp_size]):
                             position_good = False
                             break
-                        temp_available[starting_y+temp_size].remove(starting_x + i)
-                        
-                    if temp_size != -1 and temp_size != size + 1:
-                        temp_position.append((starting_x, starting_y+temp_size))
-                temp_size -= 1
-            if position_good:
-                space_available = temp_available.copy()
-                good_positions.append(temp_position)
-                if(ships_left==0):
-                    size -= 1
-                    ships_left = max_size + 1 - size
-                else:
-                    ships_left-=1
-            else:
-                temp_available = space_available.copy()
-                trial += 1
+                        fleet.temp_available[starting_y +
+                                       temp_size].remove(starting_x + i)
 
-        for ship in good_positions:
+                    if temp_size != -1 and temp_size != fleet.size + 1:
+                        temp_position.append(
+                            (starting_x, starting_y+temp_size))
+
+                temp_size -= 1
+
+            if position_good:
+                fleet.space_available = fleet.temp_available.copy()
+                fleet.good_positions.append(temp_position)
+                if(fleet.ships_left == 0):
+                    fleet.size -= 1
+                    fleet.ships_left = fleet.max_size + 1 - fleet.size
+                else:
+                    fleet.ships_left -= 1
+            else:
+                fleet.temp_available = fleet.space_available.copy()
+                fleet.trial += 1
+
+        print(reset_counter)
+        print(trial_summary)
+        draw_cost = 0
+        for ship in fleet.good_positions:
             for position in ship:
                 for tile in self.tiles:
-                    if position[0]==tile.column and position[1] == tile.row:
+                    draw_cost += 1
+                    if position[0] == tile.column and position[1] == tile.row:
                         tile.image = pygame.image.load('images/tile_shot.bmp')
+                        break
+                    
+        print(draw_cost)
 
-
+    def _set_good_position(self, position_good):
+        position_good = False
 
     def _update_screen(self):
         self.screen.fill(self.settings.bg_color)
         self.tiles.draw(self.screen)
+        
         for label in self.labels:
             label.draw_label()
-            
+
         # print(self.labels)
         pygame.display.flip()
-
 
 
 if __name__ == '__main__':

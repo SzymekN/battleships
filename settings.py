@@ -14,3 +14,8 @@ class Settings():
         self.board_margins = 100
         self.board_height = 50
         self.board_width = 50
+
+        #ship settings
+        self.max_size = 3
+        self.max_trials = 20
+
