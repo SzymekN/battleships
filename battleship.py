@@ -81,10 +81,8 @@ class Battleship:
         self.tiles.add(tile)
 
     def _create_ships(self):
+        """Generate ships positions"""
         fleet = Fleet(self)
-
-        trial_summary = 0
-        reset_counter = 0
         while fleet.size >= 1:
 
             temp_position = []
@@ -97,10 +95,12 @@ class Battleship:
             else:
                 vertical = True
 
+            # choose y coordinate of ship
             starting_y = choice(range(10 - fleet.size*vertical))
             if(len(fleet.space_available[starting_y]) == 0):
                 continue
 
+            #try to choose x coordinate of a ship if space is available
             x_trial = 0
             while x_trial < 3:
                 starting_x = choice(fleet.space_available[starting_y])
@@ -111,57 +111,10 @@ class Battleship:
                     x_trial += 1
                     position_good = False
 
-            trial_summary += x_trial
-            trial_summary += 1
-            temp_size = fleet.size+1
-            while temp_size >= 0 and position_good:
+            # check if choosen starting coordinates are good for given size
+            position_good, temp_position = fleet.check_position(fleet, horizontal, starting_x, starting_y)
 
-                if fleet.trial > fleet.max_trials:
-                    fleet._reset_parameters()
-                    position_good = False
-
-                    reset_counter += 1
-                    trial_summary += fleet.max_trials
-                    break
-
-                if horizontal:
-                    if temp_size + starting_x < 0:
-                        break
-                    elif temp_size + starting_x > 9:
-                        temp_size -= 1
-                    for i in range(-1, 2, 1):
-                        if starting_y+i < 0 or starting_y + i > 9:
-                            continue
-                        if(starting_x + temp_size not in fleet.space_available[starting_y + i]):
-                            position_good = False
-                            break
-                        fleet.temp_available[starting_y +
-                                       i].remove(starting_x + temp_size)
-
-                    if temp_size != -1 and temp_size != fleet.size + 1:
-                        temp_position.append(
-                            (starting_x+temp_size, starting_y))
-
-                elif vertical:
-                    if temp_size + starting_y < 0:
-                        break
-                    elif temp_size + starting_y > 9:
-                        temp_size -= 1
-                    for i in range(-1, 2, 1):
-                        if starting_x+i < 0 or starting_x + i > 9:
-                            continue
-                        if(starting_x + i not in fleet.space_available[starting_y + temp_size]):
-                            position_good = False
-                            break
-                        fleet.temp_available[starting_y +
-                                       temp_size].remove(starting_x + i)
-
-                    if temp_size != -1 and temp_size != fleet.size + 1:
-                        temp_position.append(
-                            (starting_x, starting_y+temp_size))
-
-                temp_size -= 1
-
+            # if position is good save coordinates
             if position_good:
                 fleet.space_available = fleet.temp_available.copy()
                 fleet.good_positions.append(temp_position)
@@ -174,21 +127,16 @@ class Battleship:
                 fleet.temp_available = fleet.space_available.copy()
                 fleet.trial += 1
 
-        print(reset_counter)
-        print(trial_summary)
-        draw_cost = 0
+        # temporary function to check if generation was acceptable - to be deleted
         for ship in fleet.good_positions:
             for position in ship:
                 for tile in self.tiles:
-                    draw_cost += 1
                     if position[0] == tile.column and position[1] == tile.row:
                         tile.image = pygame.image.load('images/tile_shot.bmp')
                         break
-                    
-        print(draw_cost)
 
-    def _set_good_position(self, position_good):
-        position_good = False
+
+
 
     def _update_screen(self):
         self.screen.fill(self.settings.bg_color)
