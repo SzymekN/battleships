@@ -26,7 +26,8 @@ class Battleship:
         # initialize game objects
         self.tiles = pygame.sprite.Group()
         self.labels = pygame.sprite.Group()
-        self.ships = []
+        self.shot = []
+        self.sunk = {}
 
         # initialize game board
         self._create_board()
@@ -44,6 +45,52 @@ class Battleship:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                self._check_click(mouse_pos)
+
+    def _check_click(self, mouse_pos):
+        coordinates = (0,0)
+        for tile in self.tiles:
+            if tile.rect.collidepoint(mouse_pos):
+                coordinates = (tile.row, tile.column)
+                if tile.occupied:
+                    tile.image = pygame.image.load('images/tile_ship_hit.bmp')
+                    self.shot.append(coordinates)
+                elif tile.sunk:
+                    break
+                else:
+                    tile.image = pygame.image.load('images/tile_shot.bmp')
+                    
+
+        to_delete = -1
+        for k in self.ships:
+            if coordinates in self.ships[k]:
+                index = self.ships[k].index(coordinates) 
+                value = self.ships[k].pop(index)
+                if k not in self.sunk:
+                    self.sunk[k] = []
+                self.sunk[k].append(value)
+                    
+                if len(self.ships[k]) == 0:
+                    for pos in self.sunk[k]:
+                        print(pos)
+                        for tile in self.tiles:
+                            if tile.row == pos[0] and tile.column == pos[1]:
+                                tile.image = pygame.image.load('images/tile_ship_sunk.bmp') 
+                                tile.sunk = True
+                                tile.occupied = False
+                        
+                    to_delete = k
+                    
+        if to_delete != -1:
+            del self.ships[to_delete]
+
+        if not self.ships:
+            print("WIN")
+
+
+        # print(self.ships)
 
     def _create_board(self):
         """Create 10x10 board of tiles"""
@@ -127,14 +174,19 @@ class Battleship:
                 fleet.temp_available = fleet.space_available.copy()
                 fleet.trial += 1
 
+        self.ships = {}
+        ship_id = 0
+
         # temporary function to check if generation was acceptable - to be deleted
         for ship in fleet.good_positions:
+            self.ships[ship_id] = ship
+            ship_id += 1
             for position in ship:
                 for tile in self.tiles:
-                    if position[0] == tile.column and position[1] == tile.row:
-                        tile.image = pygame.image.load('images/tile_shot.bmp')
+                    if position[1] == tile.column and position[0] == tile.row:
+                        tile.occupied = True
+                        # tile.image = pygame.image.load('images/tile_shot.bmp')
                         break
-
 
 
 

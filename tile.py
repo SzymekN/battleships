@@ -9,8 +9,8 @@ class Tile(Sprite):
         self.screen = bs_game.screen
         self.settings = bs_game.settings
 
-        self.shot = False
         self.occupied = False
+        self.sunk = False
 
         self.image = pygame.image.load('images/tile_default.bmp')
         self.rect = self.image.get_rect()
