@@ -11,30 +11,66 @@ class LasVegas:
         self.stats = bs_game.stats
         self.settings = bs_game.settings
 
+        self.reset_values()
+
+    def reset_values(self):
         self.to_check = []
         for i in range(10):
             self.to_check.append([j for j in range(10)])
-        print(self.bs_game.ships)
         self.known_positions = {}
 
+        self.deterministic_y = 0
+
     def las_vegas(self):
-        # pprint(self.to_check)
         if self.stats.win == False:
+            y_index = randint(0, 9)
+            if len(self.to_check[y_index]) == 0:
+                return
+            x_index = choice(self.to_check[y_index])
+            self.to_check[y_index].remove(x_index)
+            correncting_value = self.settings.board_margins + self.settings.tile_width // 5
+            y_pos = (x_index * 50) + correncting_value
+            x_pos = (y_index * 50) + correncting_value
+
+            if y_pos < 100 or y_pos > 590:
+                print(y_pos)
+            self.bs_game._check_click((y_pos, x_pos))
+            self.known_positions = self.stats.sunk
+            self.check_if_sunk()
+    
+    def deterministic(self):
+        if self.stats.win == False and self.deterministic_y < 10:
+            while len(self.to_check[self.deterministic_y]) == 0:
+                self.deterministic_y += 1
+                if self.deterministic_y >= 10:
+                    return
+
+            y_index = self.deterministic_y
+            x_index = self.to_check[y_index][0]
+            self.to_check[y_index].remove(x_index)
+            correncting_value = self.settings.board_margins + self.settings.tile_width // 5
+            y_pos = (x_index * 50) + correncting_value
+            x_pos = (y_index * 50) + correncting_value
+
+            if y_pos < 100 or y_pos > 590:
+                print(y_pos)
+            self.bs_game._check_click((y_pos, x_pos))
+            self.known_positions = self.stats.sunk
+            self.check_if_sunk()
+    
+
+    def check_if_sunk(self):
             for k in self.known_positions.copy():
                 if k not in self.bs_game.ships:
-                    print(self.known_positions)
-                    # print(self.known_positions[k])
                     self.vertical = False
                     first = self.known_positions[k][0]
                     second = self.known_positions[k][1]
                     if first[1] == second[1]:
                         self.vertical = True
                     
-
                     first = (10, 10)
                     last = (-1, -1)
                     for pos in self.known_positions[k].copy():
-                        print(pos)
                         if self.vertical:
                             # check if coordinates are good for self.vertical alignement
                             if first[0] > pos[0]:
@@ -63,14 +99,11 @@ class LasVegas:
                         if last[0] < 9:
                             x = last[1]
                             y = last[0] + 1
-
                             self.delete_neighbours(x, y, True)
                     else:
-                        print(first, last)
                         if first[1] > 0:
                             x = first[1] - 1
                             y = first[0]
-
                             self.delete_neighbours(x, y, True)
 
                         if last[1] < 9:
@@ -79,22 +112,6 @@ class LasVegas:
                             self.delete_neighbours(x, y, True)
 
                     del self.known_positions[k]
-
-            y_index = randint(0, 9)
-            if len(self.to_check[y_index]) == 0:
-                return
-            x_index = choice(self.to_check[y_index])
-            # x_index = 0
-            self.to_check[y_index].remove(x_index)
-            correncting_value = self.settings.board_margins + self.settings.tile_width // 5
-            y_pos = (x_index * 50) + correncting_value
-            x_pos = (y_index * 50) + correncting_value
-
-            if y_pos < 100 or y_pos > 590:
-                print(y_pos)
-            self.bs_game._check_click((y_pos, x_pos))
-            self.known_positions = self.stats.sunk
-            # print(f'kp: {self.known_positions}')
 
     def delete_neighbours(self, x, y, del_this=False):
 
@@ -127,10 +144,6 @@ class LasVegas:
                     self.to_check[y+1].remove(x)
                 pos2 = (y +1 , x)
 
-        print(y, x)
-        print(pos1)
-        print(pos2)
-        print(pos3)
         for tile in self.bs_game.tiles:
             if tile.row == pos1[0] and tile.column == pos1[1] or tile.row == pos2[0] and tile.column == pos2[1] or tile.row == pos3[0] and tile.column == pos3[1]:
                 tile.image = pygame.image.load(

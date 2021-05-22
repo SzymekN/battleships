@@ -20,3 +20,9 @@ class Settings():
         #score settings
         self.score_top_margin = self.tile_height*10 + self.board_margins * 1.5 
 
+        #algorithm settings
+        self.las_vegas = False
+        self.deterministic = True
+        self.max_games = 100
+
+

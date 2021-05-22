@@ -1,10 +1,8 @@
-
-from las_vegas import LasVegas
-from scoreboard import Scoreboard
-from game_stats import GameStats
-from fleet import Fleet
 import sys
 import pygame
+import time as t
+from pygame import time
+from fleet import Fleet
 from random import choice
 
 
@@ -37,6 +35,7 @@ class Battleship:
 
         # initialize game board
         self._create_board()
+        self._create_tiles()
         self._create_ships()
         self.sb.prep_moves()
 
@@ -45,11 +44,41 @@ class Battleship:
 
     def run_game(self):
         """Start main game"""
+        self.start = t.time()
         while True:
-            pygame.time.Clock().tick(300)
-            self.ls.las_vegas()
+            # pygame.time.Clock().tick(10)
+            if self.settings.deterministic:
+                self.ls.deterministic()
+            elif self.settings.las_vegas:
+                self.ls.las_vegas()
             self._check_events()
             self._update_screen()
+
+            if self.stats.win and self.stats.end_game == False:
+                self.reset_game()
+
+    def reset_game(self):
+        for tile in self.tiles:
+            tile.occupied = False
+            tile.sunk = False
+            tile.image = pygame.image.load('images/tile_default.bmp')
+
+        self.stats.total_games += 1
+        self.stats.total_moves += self.stats.moves
+
+        print(self.stats.total_games)
+        if self.stats.total_games == self.settings.max_games:
+            self.end = t.time()
+            print(f'Total moves: {self.stats.total_moves}')
+            print(f'AVG moves: {self.stats.total_moves / self.stats.total_games}')
+            print(f'Time elapsed: {self.end - self.start}')
+            self.stats.end_game = True
+
+
+        self._create_ships()
+        self.ls.reset_values()
+        self.stats.reset_stats()
+
 
     def _check_events(self):
         """Respond if event occurs"""
@@ -61,7 +90,6 @@ class Battleship:
                 self._check_click(mouse_pos)
 
     def _check_click(self, mouse_pos):
-        # print(mouse_pos)
         coordinates = (0, 0)
         for tile in self.tiles:
             if tile.rect.collidepoint(mouse_pos):
@@ -128,20 +156,20 @@ class Battleship:
             label_y = Label(self, str, edge_distance, pos_y)
             self.labels.add(label_y)
 
+
+
+    def _create_tiles(self):
+        """Create tiles in different positions"""
+        margin = self.settings.board_margins
         for row_number in range(10):
             for column_number in range(10):
-                self._create_tile(row_number, column_number)
-
-    def _create_tile(self, row_number, column_number):
-        """Create tiles in different positions"""
-        tile = Tile(self)
-        tile_width = tile.rect.width
-        margin = self.settings.board_margins
-        tile.rect.x = margin + column_number * tile_width - 1 * column_number
-        tile.rect.y = margin + row_number * tile_width - 1 * row_number
-        tile.row = row_number
-        tile.column = column_number
-        self.tiles.add(tile)
+                tile = Tile(self)
+                tile_width = tile.rect.width
+                tile.rect.x = margin + column_number * tile_width - 1 * column_number
+                tile.rect.y = margin + row_number * tile_width - 1 * row_number
+                tile.row = row_number
+                tile.column = column_number
+                self.tiles.add(tile)
 
     def _create_ships(self):
         """Generate ships positions"""
@@ -214,12 +242,8 @@ class Battleship:
 
         self.sb.show_score()
 
-        if self.stats.win:
-            self.sb.show_win()
-        
         # print(self.labels)
         pygame.display.flip()
-
 
 if __name__ == '__main__':
     bs = Battleship()
