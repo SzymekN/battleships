@@ -1,4 +1,5 @@
 
+from las_vegas import LasVegas
 from scoreboard import Scoreboard
 from game_stats import GameStats
 from fleet import Fleet
@@ -12,6 +13,7 @@ from tile import Tile
 from label import Label
 from game_stats import GameStats
 from scoreboard import Scoreboard
+from las_vegas import LasVegas
 
 
 class Battleship:
@@ -38,11 +40,14 @@ class Battleship:
         self._create_ships()
         self.sb.prep_moves()
 
+        self.ls = LasVegas(self)
+
 
     def run_game(self):
         """Start main game"""
         while True:
-            pygame.time.Clock().tick(self.settings.FPS)
+            pygame.time.Clock().tick(300)
+            self.ls.las_vegas()
             self._check_events()
             self._update_screen()
 
@@ -56,6 +61,7 @@ class Battleship:
                 self._check_click(mouse_pos)
 
     def _check_click(self, mouse_pos):
+        # print(mouse_pos)
         coordinates = (0, 0)
         for tile in self.tiles:
             if tile.rect.collidepoint(mouse_pos):
