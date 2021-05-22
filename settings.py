@@ -19,3 +19,6 @@ class Settings():
         self.max_size = 3
         self.max_trials = 20
 
+        #score settings
+        self.score_top_margin = self.tile_height*10 + self.board_margins * 1.5 
+
