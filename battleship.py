@@ -51,7 +51,7 @@ class Battleship:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN and self.stats.win == False:
                 mouse_pos = pygame.mouse.get_pos()
                 self._check_click(mouse_pos)
 
@@ -74,6 +74,7 @@ class Battleship:
             del self.ships[to_delete]
 
         if not self.ships:
+            self.stats.win = True
             print("WIN")
 
         self.sb.prep_moves()
@@ -207,6 +208,9 @@ class Battleship:
 
         self.sb.show_score()
 
+        if self.stats.win:
+            self.sb.show_win()
+        
         # print(self.labels)
         pygame.display.flip()
 
