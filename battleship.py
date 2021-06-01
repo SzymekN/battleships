@@ -41,12 +41,12 @@ class Battleship:
 
         self.ls = LasVegas(self)
 
-
     def run_game(self):
         """Start main game"""
         self.start = t.time()
         while True:
-            # pygame.time.Clock().tick(10)
+            # a = input("w")
+            pygame.time.Clock  ().tick(30)
             if self.settings.deterministic:
                 self.ls.deterministic()
             elif self.settings.las_vegas:
@@ -70,15 +70,14 @@ class Battleship:
         if self.stats.total_games == self.settings.max_games:
             self.end = t.time()
             print(f'Total moves: {self.stats.total_moves}')
-            print(f'AVG moves: {self.stats.total_moves / self.stats.total_games}')
+            print(
+                f'AVG moves: {self.stats.total_moves / self.stats.total_games}')
             print(f'Time elapsed: {self.end - self.start}')
             self.stats.end_game = True
-
 
         self._create_ships()
         self.ls.reset_values()
         self.stats.reset_stats()
-
 
     def _check_events(self):
         """Respond if event occurs"""
@@ -96,13 +95,15 @@ class Battleship:
                 coordinates = (tile.row, tile.column)
                 if tile.occupied:
                     tile.image = pygame.image.load('images/tile_ship_hit.bmp')
+                    self.ls.shot_succesful = True
                 elif tile.sunk:
                     break
                 else:
                     tile.image = pygame.image.load('images/tile_shot.bmp')
+                    self.ls.shot_succesful = False
                 self.stats.moves += 1
 
-        to_delete = self.check_shot(coordinates)        
+        to_delete = self.check_shot(coordinates)
 
         if to_delete != None:
             del self.ships[to_delete]
@@ -132,10 +133,10 @@ class Battleship:
                                     'images/tile_ship_sunk.bmp')
                                 tile.sunk = True
                                 tile.occupied = False
-                    self.stats.ships_sunk +=1
+                    self.stats.ships_sunk += 1
                     self.sb.prep_sunk()
                     return k
-                    
+
     def _create_board(self):
         """Create 10x10 board of tiles"""
         board_margin = self.settings.board_margins
@@ -155,8 +156,6 @@ class Battleship:
                 str = "10"
             label_y = Label(self, str, edge_distance, pos_y)
             self.labels.add(label_y)
-
-
 
     def _create_tiles(self):
         """Create tiles in different positions"""
@@ -244,6 +243,7 @@ class Battleship:
 
         # print(self.labels)
         pygame.display.flip()
+
 
 if __name__ == '__main__':
     bs = Battleship()

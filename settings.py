@@ -21,8 +21,8 @@ class Settings():
         self.score_top_margin = self.tile_height*10 + self.board_margins * 1.5 
 
         #algorithm settings
-        self.las_vegas = False
-        self.deterministic = True
+        self.las_vegas = True
+        self.deterministic = False
         self.max_games = 100
 
 
