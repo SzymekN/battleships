@@ -1,6 +1,7 @@
 import pygame
 from pygame.sprite import Sprite
 
+
 class Tile(Sprite):
     """Class represents one tile on board"""
 
@@ -9,7 +10,9 @@ class Tile(Sprite):
         self.screen = bs_game.screen
         self.settings = bs_game.settings
 
+        # any ship on tile
         self.occupied = False
+        # ship on this tile shot
         self.sunk = False
 
         self.image = pygame.image.load('images/tile_default.bmp')

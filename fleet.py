@@ -24,14 +24,14 @@ class Fleet:
         temp_size = fleet.size+1
 
         while temp_size >= 0 and position_good:
-            
-            #if too many trials to generate ships, start from beginning
+
+            # if too many trials to generate ships, start from beginning
             if fleet.trial > fleet.max_trials:
                 fleet._reset_parameters()
                 position_good = False
                 break
 
-            # check if coordinates are good for horizontal alignment 
+            # check if coordinates are good for horizontal alignment
             if horizontal:
                 if temp_size + start_x < 0:
                     break
@@ -44,7 +44,7 @@ class Fleet:
                         position_good = False
                         break
                     fleet.temp_available[start_y +
-                                    i].remove(start_x + temp_size)
+                                         i].remove(start_x + temp_size)
 
                 if temp_size != -1 and temp_size != fleet.size + 1:
                     temp_position.append(
@@ -63,7 +63,7 @@ class Fleet:
                         position_good = False
                         break
                     fleet.temp_available[start_y +
-                                    temp_size].remove(start_x + i)
+                                         temp_size].remove(start_x + i)
 
                 if temp_size != -1 and temp_size != fleet.size + 1:
                     temp_position.append(
@@ -72,3 +72,16 @@ class Fleet:
             temp_size -= 1
 
         return position_good, temp_position
+
+    def create_ships_dict(self, bs_game):
+        """Create dictionary with ships positions and set positions as occupied"""
+        ship_id = 0
+        bs_game.ships = {}
+        for ship in self.good_positions:
+            bs_game.ships[ship_id] = ship
+            ship_id += 1
+            for position in ship:
+                for tile in bs_game.tiles:
+                    if position[1] == tile.column and position[0] == tile.row:
+                        tile.occupied = True
+                        break

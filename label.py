@@ -1,6 +1,7 @@
 import pygame.font
 from pygame.sprite import Sprite
 
+
 class Label(Sprite):
     """class representing board labels"""
 
@@ -10,15 +11,15 @@ class Label(Sprite):
         self.settings = bs_game.settings
         self.screen_rect = self.screen.get_rect()
 
+        # default label settings 
         self.width = self.settings.tile_width
         self.height = self.settings.tile_height
-        self.text_color = (0,0,0)
+        self.text_color = (0, 0, 0)
+        
         self.font = pygame.font.SysFont(None, 48)
+        self.rect = pygame.Rect(pos_x, pos_y, self.width, self.height)
 
-
-        self.rect = pygame.Rect(pos_x,pos_y,self.width, self.height)
-        # self.rect.midbottom = (0,0)
-
+        # prepare label
         self._prep_label(str)
 
     def _prep_label(self, str):
@@ -28,5 +29,5 @@ class Label(Sprite):
         self.label_image_rect.center = self.rect.center
 
     def draw_label(self):
+        """Draw label on screen"""
         self.screen.blit(self.label_image, self.label_image_rect)
-    

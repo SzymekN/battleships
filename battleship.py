@@ -46,7 +46,7 @@ class Battleship:
         self.start = t.time()
         while True:
             # a = input("w")
-            pygame.time.Clock  ().tick(30)
+            pygame.time.Clock().tick(30)
             if self.settings.deterministic:
                 self.ls.deterministic()
             elif self.settings.las_vegas:
@@ -58,15 +58,20 @@ class Battleship:
                 self.reset_game()
 
     def reset_game(self):
+        """Reset whole game"""
+
+        # set default tile values
         for tile in self.tiles:
             tile.occupied = False
             tile.sunk = False
             tile.image = pygame.image.load('images/tile_default.bmp')
 
+        # update stats
         self.stats.total_games += 1
         self.stats.total_moves += self.stats.moves
 
         print(self.stats.total_games)
+        # if max number of games reached stop game
         if self.stats.total_games == self.settings.max_games:
             self.end = t.time()
             print(f'Total moves: {self.stats.total_moves}')
@@ -89,25 +94,37 @@ class Battleship:
                 self._check_click(mouse_pos)
 
     def _check_click(self, mouse_pos):
+        """Check if clicked on any tile"""
         coordinates = (0, 0)
         for tile in self.tiles:
             if tile.rect.collidepoint(mouse_pos):
+
+                # update move count stat
+                self.stats.moves += 1
+                # get indexes of tile that collided with pointer
                 coordinates = (tile.row, tile.column)
+
+                # if there is a ship on current tile change image
                 if tile.occupied:
                     tile.image = pygame.image.load('images/tile_ship_hit.bmp')
                     self.ls.shot_succesful = True
+                    break
+                # if already whole ship sunk
                 elif tile.sunk:
                     break
                 else:
                     tile.image = pygame.image.load('images/tile_shot.bmp')
                     self.ls.shot_succesful = False
-                self.stats.moves += 1
+                    break
 
+        # check if whole ship got sunk
         to_delete = self.check_shot(coordinates)
 
+        # if whole ship sunk remove from alive ships
         if to_delete != None:
             del self.ships[to_delete]
 
+        # if last ship sunk, game is won
         if not self.ships:
             self.stats.win = True
             print("WIN")
@@ -116,14 +133,21 @@ class Battleship:
 
     def check_shot(self, coordinates):
         """Functions checks if shot hit any ship"""
+
         for k in self.ships:
             if coordinates in self.ships[k]:
+
                 # remove coordianates from list containing ships alive
                 index = self.ships[k].index(coordinates)
                 value = self.ships[k].pop(index)
+
+                # if this ship wasn't hit yet
                 if k not in self.stats.sunk:
                     self.stats.sunk[k] = []
+
+                # add position of a segment of this ship
                 self.stats.sunk[k].append(value)
+
                 # if all segments of a ship were shot, change image and delete key
                 if len(self.ships[k]) == 0:
                     for pos in self.stats.sunk[k]:
@@ -133,33 +157,41 @@ class Battleship:
                                     'images/tile_ship_sunk.bmp')
                                 tile.sunk = True
                                 tile.occupied = False
+
+                    # update sunk ships counter and make new label
                     self.stats.ships_sunk += 1
                     self.sb.prep_sunk()
                     return k
 
     def _create_board(self):
         """Create 10x10 board of tiles"""
+
         board_margin = self.settings.board_margins
         label_width = self.settings.tile_width
         label_height = self.settings.tile_height
         edge_distance = board_margin - label_height
+
+        # create board labels
         for label in range(10):
-            pos_x = board_margin + label * label_width - 1*label
+            pos_x = board_margin + label * label_width - 1 * label
             str = chr(65+label)
             label_x = Label(self, str, pos_x, edge_distance)
 
             self.labels.add(label_x)
 
-            pos_y = board_margin + label * label_height - 1*label
+            pos_y = board_margin + label * label_height - 1 * label
             str = chr(49 + label)
             if str == ":":
                 str = "10"
             label_y = Label(self, str, edge_distance, pos_y)
+
             self.labels.add(label_y)
 
     def _create_tiles(self):
         """Create tiles in different positions"""
         margin = self.settings.board_margins
+
+        # initialize tiles and give them default positions
         for row_number in range(10):
             for column_number in range(10):
                 tile = Tile(self)
@@ -172,7 +204,10 @@ class Battleship:
 
     def _create_ships(self):
         """Generate ships positions"""
+
         fleet = Fleet(self)
+
+        # look for positions until all ships are created = until size of a ship to create > 0
         while fleet.size >= 1:
 
             temp_position = []
@@ -209,7 +244,9 @@ class Battleship:
             if position_good:
                 fleet.space_available = fleet.temp_available.copy()
                 fleet.good_positions.append(temp_position)
-                if(fleet.ships_left == 0):
+
+                # if no ships left, decrease next ship size and set new value to ships_left
+                if fleet.ships_left == 0:
                     fleet.size -= 1
                     fleet.ships_left = fleet.max_size + 1 - fleet.size
                 else:
@@ -218,21 +255,11 @@ class Battleship:
                 fleet.temp_available = fleet.space_available.copy()
                 fleet.trial += 1
 
-        self.ships = {}
-        ship_id = 0
-
-        # temporary function to check if generation was acceptable - to be deleted
-        for ship in fleet.good_positions:
-            self.ships[ship_id] = ship
-            ship_id += 1
-            for position in ship:
-                for tile in self.tiles:
-                    if position[1] == tile.column and position[0] == tile.row:
-                        tile.occupied = True
-                        # tile.image = pygame.image.load('images/tile_shot.bmp')
-                        break
+        # save ships positions
+        fleet.create_ships_dict(self)
 
     def _update_screen(self):
+        """Update objects on screen"""
         self.screen.fill(self.settings.bg_color)
         self.tiles.draw(self.screen)
 
@@ -241,7 +268,6 @@ class Battleship:
 
         self.sb.show_score()
 
-        # print(self.labels)
         pygame.display.flip()
 
 
